@@ -1,12 +1,12 @@
-use std::{path::PathBuf, fs};
+use std::{fs, path::PathBuf};
 
-use rpy::Result;
 use clap::Parser;
+use rpy::Result;
 
 #[derive(Parser, Debug)]
 struct Args {
     source_file: PathBuf,
-    output_file: Option<PathBuf>
+    output_file: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {

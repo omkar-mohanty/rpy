@@ -1,6 +1,4 @@
-pub enum Token {
-    
-}
+pub enum Token {}
 
 pub struct Lexer {
     source: &'static str,
