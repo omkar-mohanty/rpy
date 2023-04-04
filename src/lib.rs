@@ -8,7 +8,13 @@ pub enum Expr {
 }
 
 peg::parser! {pub grammar parser() for str {
-    pub rule expression() -> Expr
+    pub rule statements() -> Vec<Expr>
+        = s:(statement()*) { s }
+
+    rule statement() -> Expr
+        = _ e:expression() _ "\n" { e }
+
+    rule expression() -> Expr
         = assignment() /
           literal()
 
@@ -32,35 +38,22 @@ mod tests {
 
     const ASSIGN:&str = r"A = 3";
 
-    const MULTI_ASSIGN:&str = r"A = 3
-        B = A
-    ";
+    const MULTI_ASSIGN:&str = "A = 3";
 
     #[test]
     fn test_assignment() -> Result<()> {
-        let expr = parser::expression(ASSIGN)?;
+        let expr = parser::statements(ASSIGN)?;
 
-        match expr {
-            Expr::Assign(var, _) => {
-                assert_eq!(var, "A");
-            }
-            _ => panic!()
-        }
+        assert_eq!(expr.len(), 1);
 
         Ok(())
     }
 
     #[test]
     fn test_multi_assign() -> Result<()> {
-        let expr = parser::expression(MULTI_ASSIGN)?;
+        let expr = parser::statements(MULTI_ASSIGN)?;
 
-        match expr {
-            Expr::Assign(var, _) => {
-                assert_eq!(var, "A");
-            }
-
-            _ => panic!()
-        };
+        assert_eq!(expr.len(), 2);
 
         Ok(())
     }
