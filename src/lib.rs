@@ -1,4 +1,3 @@
-mod lexer;
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub enum Expr {
@@ -33,8 +32,7 @@ mod tests {
 
     const ASSIGN:&str = r"A = 3";
 
-    const MULTI_ASSIGN:&str = r"
-        A = 3
+    const MULTI_ASSIGN:&str = r"A = 3
         B = A
     ";
 
