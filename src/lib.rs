@@ -16,6 +16,8 @@ peg::parser! {pub grammar parser() for str {
     rule assignment() -> Expr
         = i:identifier() _ "=" _ e:expression() {Expr::Assign(i, Box::new(e))}
 
-
+    rule identifier() -> String
+        = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
+        / expected!("identifier")
 
 }}
