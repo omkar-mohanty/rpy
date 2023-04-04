@@ -20,4 +20,9 @@ peg::parser! {pub grammar parser() for str {
         = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
         / expected!("identifier")
 
+    rule literal() -> Expr
+        = n:$(['0'..='9']+) { Expr::Literal(n.to_owned()) } /
+            i:identifier() {Expr::GlobalDataAddr(i)}
+
+     rule _() =  quiet!{[' ' | '\t']*}
 }}
