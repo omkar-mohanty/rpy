@@ -33,6 +33,11 @@ mod tests {
 
     const ASSIGN:&str = r"A = 3";
 
+    const MULTI_ASSIGN:&str = r"
+        A = 3
+        B = A
+    ";
+
     #[test]
     fn test_assignment() -> Result<()> {
         let expr = parser::expression(ASSIGN)?;
@@ -43,6 +48,21 @@ mod tests {
             }
             _ => panic!()
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_multi_assign() -> Result<()> {
+        let expr = parser::expression(MULTI_ASSIGN)?;
+
+        match expr {
+            Expr::Assign(var, _) => {
+                assert_eq!(var, "A");
+            }
+
+            _ => panic!()
+        };
 
         Ok(())
     }
