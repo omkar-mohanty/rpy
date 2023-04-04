@@ -26,3 +26,24 @@ peg::parser! {pub grammar parser() for str {
 
      rule _() =  quiet!{[' ' | '\t']*}
 }}
+
+#[cfg(test)] 
+mod tests {
+    use super::*;
+
+    const ASSIGN:&str = r"A = 3";
+
+    #[test]
+    fn test_assignment() -> Result<()> {
+        let expr = parser::expression(ASSIGN)?;
+
+        match expr {
+            Expr::Assign(var, _) => {
+                assert_eq!(var, "A");
+            }
+            _ => panic!()
+        }
+
+        Ok(())
+    }
+}
