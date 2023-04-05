@@ -65,6 +65,8 @@ peg::parser! {pub grammar parser() for str {
 
     rule breakline() = quiet!{[ ' ' | '\t' ]*}
 
+    rule newline() =  quiet!{['\n']*}
+
       rule _() =  quiet!{[' ' | '\t']*}
 }}
 
