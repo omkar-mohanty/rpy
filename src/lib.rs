@@ -35,23 +35,25 @@ impl Display for Expr {
 }
 
 peg::parser! {pub grammar parser() for str {
+    pub rule file() -> Vec<Expr> =
+    statements() / function()
 
-    pub rule function() -> (Expr, Vec<String>, Vec<Expr>) =
-    [' ', '\t', '\n']* "def" _ name:identifier() _ "(" params:((_ i:identifier()_{i})** "," )")" _ ":" [' ', '\t', '\n']* stmts:statements() {
-        (Expr::Identifier(name), params, stmts)
-    }
-    
-    pub rule statements() -> Vec<Expr>
+    rule function() -> Vec<Expr> =
+    [' ' | '\t' | '\n']* "def" _ name:identifier() _ "(" _ ")" _ ":" [' ' | '\t' | '\n'] {
+        vec![Expr::Identifier(name)]
+    }  
+
+    rule statements() -> Vec<Expr>
         = s:(statement()*) { s }
 
     rule statement() -> Expr
-        = _ e:expression() _ "\n" { e }
+        = _ e:expression() [ _ | '\n' ]* { e }
 
     rule expression() -> Expr
         = assignment()
 
      rule assignment() -> Expr
-        = i:identifier() _ "=" _ e:expression() {Expr::Assign(i, Box::new(e))}
+        = _  i:identifier() _ "=" _ e:expression() {Expr::Assign(i, Box::new(e))}
 
      rule identifier() -> String
         = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
@@ -59,7 +61,7 @@ peg::parser! {pub grammar parser() for str {
 
     rule literal() -> Expr
         = n:$(['0'..='9']+) { Expr::Literal(n.to_owned()) }
-        / "&" i:identifier() { Expr::GlobalDataAddr(i) }
+        / i:identifier() { Expr::GlobalDataAddr(i) }
 
       rule _() =  quiet!{[' ' | '\t']*}
 }}
@@ -68,6 +70,8 @@ peg::parser! {pub grammar parser() for str {
 mod tests {
     use super::*;
 
+    const FUNCTION:&str = "def hello():";
+
     const ASSIGN: &str = "A = 3";
 
     const MULTI_ASSIGN: &str = "A = 3
@@ -75,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_assignment() -> Result<()> {
-        let expr = parser::statements(ASSIGN)?;
+        let expr = parser::file(ASSIGN)?;
 
         match &expr[0] {
             Expr::Assign(name, val) => {
@@ -89,9 +93,18 @@ mod tests {
 
     #[test]
     fn test_multi_assign() -> Result<()> {
-        let expr = parser::statements(MULTI_ASSIGN)?;
+        let expr = parser::file(MULTI_ASSIGN)?;
 
         assert_eq!(expr.len(), 2);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_function() -> Result<()> {
+        let expr = parser::file(FUNCTION)?;
+
+        assert_eq!(expr.len(), 1);
 
         Ok(())
     }
