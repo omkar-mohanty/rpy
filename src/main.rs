@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use clap::Parser;
+use rpy::parser as rpy_parser;
 use rpy::Result;
-use rpy::parser as rpy_parser;            
 
 #[derive(Parser, Debug)]
 struct Args {
