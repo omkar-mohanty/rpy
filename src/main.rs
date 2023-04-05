@@ -17,7 +17,7 @@ fn main() -> Result<()> {
 
     println!("{}", source);
 
-    let ast = rpy_parser::statements(&source)?;
+    let ast = rpy_parser::file(&source)?;
 
     println!("{}", ast.len());
 
