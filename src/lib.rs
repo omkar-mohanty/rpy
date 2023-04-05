@@ -47,7 +47,7 @@ peg::parser! {pub grammar parser() for str {
         = s:(statement()*) { s }
 
     rule statement() -> Expr
-        = _ e:expression() [ _ | '\n' ]* { e }
+        = breakline() e:expression() breakline() { e }
 
     rule expression() -> Expr
         = assignment()
@@ -62,6 +62,8 @@ peg::parser! {pub grammar parser() for str {
     rule literal() -> Expr
         = n:$(['0'..='9']+) { Expr::Literal(n.to_owned()) }
         / i:identifier() { Expr::GlobalDataAddr(i) }
+
+    rule breakline() = quiet!{[ ' ' | '\t' ]*}
 
       rule _() =  quiet!{[' ' | '\t']*}
 }}
