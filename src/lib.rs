@@ -37,39 +37,23 @@ impl Display for Expr {
 }
 
 peg::parser! {pub grammar parser() for str {
-    pub rule file() -> Vec<Expr> = functions() / statements()
+    pub rule file() -> Vec<Expr> = s:statements() { s }
 
-   rule statements() -> Vec<Expr>
-        = s:(statement()*) { s }
+    rule statements() -> Vec<Expr> = s:statement()+ { s }
 
-    rule statement() -> Expr
-        =  blankline() e:expression()  blankline() { e }
+    rule statement() -> Expr = compound_statement() / simple_statement()
 
-    pub rule functions() -> Vec<Expr> =  s:(function()*) {s}
+    rule compound_statement() -> Expr = simple_statement()
 
-    rule function() -> Expr = 
-    blankline() "def" _ name:identifier() _ "(" _ params:((_ i:identifier() _ {i})) ** "," ")" _ ":" "\n"* stmts:(statement()+) {
-       Expr::Function(name, params, stmts) 
-    }
+    rule simple_statement() -> Expr = assignment()
 
-    rule expression() -> Expr = assignment() / literal()
+    rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" expr:expression() "\n"* { Expr::Assign(id, expr)}
 
-   rule assignment() -> Expr = ident:identifier() _ "=" _ expr:expression() {
-        Expr::Assign(ident, Box::new(expr))
-    }
-
-   rule identifier() -> String
+    rule name() -> String
         = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
         / expected!("identifier")
 
-    rule literal() -> Expr
-        = n:$(['0'..='9']+) { Expr::Literal(n.to_owned()) }
-        / "&" i:identifier() { Expr::GlobalDataAddr(i) }
-
-    rule blankline() = quiet!{[' ' | '\t' | '\n']*}
-    rule _() =  quiet!{[' ' | '\t']*}
-
-
+    rule _() = quiet!{[' ' | '\t' ]*}
 }}
 
 #[cfg(test)]
