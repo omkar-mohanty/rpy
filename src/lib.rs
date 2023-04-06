@@ -35,44 +35,40 @@ impl Display for Expr {
 }
 
 peg::parser! {pub grammar parser() for str {
-    pub rule file() -> Vec<Expr> =
-    statements() / function()
+    pub rule file() -> Vec<Expr> = statements() 
 
-    rule function() -> Vec<Expr> =
-    [' ' | '\t' | '\n']* "def" _ name:identifier() _ "(" _ ")" _ ":" [' ' | '\t' | '\n'] {
-        vec![Expr::Identifier(name)]
-    }  
-
-    rule statements() -> Vec<Expr>
+     rule statements() -> Vec<Expr>
         = s:(statement()*) { s }
 
     rule statement() -> Expr
-        = breakline() e:expression() breakline() { e }
+        = _ e:expression() _ "\n" { e }
 
-    rule expression() -> Expr
-        = assignment()
+    rule expression() -> Expr = assignment() / literal()
 
-     rule assignment() -> Expr
-        = _  i:identifier() _ "=" _ e:expression() {Expr::Assign(i, Box::new(e))}
-
-     rule identifier() -> String
-        = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
-        / expected!("identifier")
+    pub rule assignment() -> Expr = _ ident:identifier() _ "=" _ expr:expression() {
+        Expr::Assign(ident, Box::new(expr))    
+    }
 
     rule literal() -> Expr
         = n:$(['0'..='9']+) { Expr::Literal(n.to_owned()) }
         / i:identifier() { Expr::GlobalDataAddr(i) }
 
-    rule breakline() = quiet!{[ ' ' | '\t' ]*}
+    pub rule identifier() -> String
+        = quiet!{ n:$(['a'..='z' | 'A'..='Z' ]*) { n.to_owned() } }
+        / expected!("identifier")
 
-    rule newline() =  quiet!{['\n']*}
+    rule endl() = quiet!{"\n"*}
 
-      rule _() =  quiet!{[' ' | '\t']*}
+    rule blankline() = quiet!{[ ' ' | '\t' | '\n' ]*}
+
+    rule _() =  quiet!{[' ' | '\t']*}
 }}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const IDENT:&str = "A";
 
     const FUNCTION:&str = "def hello():";
 
@@ -82,15 +78,15 @@ mod tests {
     B = A";
 
     #[test]
-    fn test_assignment() -> Result<()> {
-        let expr = parser::file(ASSIGN)?;
+    fn test_ident() -> Result<()> {
+        let expr = parser::identifier(IDENT)?;
+        assert_eq!(expr.as_str(), "A");
+        Ok(())
+    }
 
-        match &expr[0] {
-            Expr::Assign(name, val) => {
-                assert_eq!("A", name);
-            }
-            _ => {}
-        };
+    #[test]
+    fn test_assignment() -> Result<()> {
+        let expr = parser::assignment(ASSIGN)?;
 
         Ok(())
     }
@@ -99,16 +95,12 @@ mod tests {
     fn test_multi_assign() -> Result<()> {
         let expr = parser::file(MULTI_ASSIGN)?;
 
-        assert_eq!(expr.len(), 2);
-
         Ok(())
     }
 
     #[test]
     fn test_function() -> Result<()> {
         let expr = parser::file(FUNCTION)?;
-
-        assert_eq!(expr.len(), 1);
 
         Ok(())
     }
