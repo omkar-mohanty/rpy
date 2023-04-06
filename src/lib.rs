@@ -37,7 +37,7 @@ impl Display for Expr {
 }
 
 peg::parser! {pub grammar parser() for str {
-    pub rule file() -> Vec<Expr> = statements() / functions()
+    pub rule file() -> Vec<Expr> = functions() / statements()
 
    rule statements() -> Vec<Expr>
         = s:(statement()*) { s }
@@ -78,7 +78,7 @@ mod tests {
 
     const FUNCTION_NO_PARAMS: &str = "def hello():
     A = 3";
-    const FUNCTION_MULTI_PARAM: &str = "def hello(A,B,C):
+    const FUNCTION_MULTI_PARAM: &str = "def hello(A ,B ,C):
     A = 3";
     const ASSIGN: &str = "A = 3";
 
@@ -102,8 +102,8 @@ B = 4";
 
     #[test]
     fn test_function() -> Result<()> {
-        parser::functions(FUNCTION_NO_PARAMS)?;
-        parser::functions(FUNCTION_MULTI_PARAM)?;
+        parser::file(FUNCTION_NO_PARAMS)?;
+        parser::file(FUNCTION_MULTI_PARAM)?;
         Ok(())
     }
 }
