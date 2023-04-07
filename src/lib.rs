@@ -1,3 +1,5 @@
+mod jit;
+
 use std::fmt::Display;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -104,7 +106,8 @@ B = 4";
 
     const BINARY_OP:&str = "A = 3 + 4
 C = 9 + 10
-D = A + B";
+D = A + B
+F = G - 10";
 
     #[test]
     fn test_assignment() -> Result<()> {
