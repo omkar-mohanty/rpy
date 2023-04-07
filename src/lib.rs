@@ -65,9 +65,9 @@ peg::parser! {pub grammar parser() for str {
 
     rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" _ expr:expression() "\n"* { Expr::Assign(id, Box::new(expr))}
 
-    rule expression() -> Expr = assignment()  / literal()
+    rule expression() -> Expr = assignment()  / arithmetic() / literal() 
 
-    rule arithmetic() -> Expr = [' ' | '\t' | '\n']* operand:expression() _ op:op() _ operator:expression() "\n"* {Expr::Operation(Box::new(operand), Box::new(operator), op)} 
+    rule arithmetic() -> Expr =operand:number() _ op:op() _ operator:number() {Expr::Operation(Box::new(operand), Box::new(operator), op)} 
 
     rule op() -> BinaryOp = add() / sub() / mul() / div() 
 
@@ -102,6 +102,8 @@ mod tests {
     const MULTI_ASSIGN: &str = "A = 3
 B = 4";
 
+    const BINARY_OP:&str = "A = 3 + 4";
+
     #[test]
     fn test_assignment() -> Result<()> {
         let _ = &parser::file(ASSIGN)?[0];
@@ -118,6 +120,12 @@ B = 4";
     fn test_function() -> Result<()> {
         parser::file(FUNCTION_NO_PARAMS)?;
         parser::file(FUNCTION_MULTI_PARAM)?;
+        Ok(())
+    }
+
+    #[test]
+    fn binary_op() -> Result<()> {
+        parser::file(BINARY_OP)?;
         Ok(())
     }
 }
