@@ -9,4 +9,5 @@ edition = "2021"
 clap = {version ="4.0.32", features = ["derive"]}
 peg = "0.8.1"
 cranelift-jit = "0.94.0"
-
+cranelift = "0.94.0"
+cranelift-module = "0.94.0"
