@@ -47,13 +47,19 @@ peg::parser! {pub grammar parser() for str {
 
     rule simple_statement() -> Expr = assignment()
 
-    rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" _ expr:expression() "\n"* { Expr::Assign(id, Box::new(expr))}
+    rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" _ expr:expression() ['\n' | ';']* { Expr::Assign(id, Box::new(expr))}
 
-    rule expression() -> Expr = assignment() 
+    rule expression() -> Expr = assignment()  / literal()
 
     rule name() -> String
         = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
         / expected!("identifier")
+
+    rule literal() -> Expr
+        = n:number() 
+        /  i:name() { Expr::GlobalDataAddr(i) }
+
+    rule number() -> Expr = n:$(['0'..='9']+) {Expr::Literal(n.to_owned())}
 
     rule _() = quiet!{[' ' | '\t' ]*}
 }}
