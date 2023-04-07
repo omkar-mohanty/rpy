@@ -7,14 +7,22 @@ pub enum Expr {
     Identifier(String),
     Assign(String, Box<Expr>),
     GlobalDataAddr(String),
-    Function(String, Vec<String>, Vec<Expr>)
+    Function(String, Vec<String>, Vec<Expr>),
+    Operation(Box<Expr>, Box<Expr>, BinaryOp)
+}
+
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div
 }
 
 pub fn print_ast(expr: &Expr) {
     use Expr::*;
 
     match expr {
-        Literal(_) | Identifier(_) | GlobalDataAddr(_) | Function(_, _, _) => println!("{}", expr),
+        Literal(_) | Identifier(_) | GlobalDataAddr(_) | Function(_, _, _) | Operation(_, _, _) => println!("{}", expr),
         Assign(var, val) => {
             println!("{} {}", var, val)
         }
@@ -31,7 +39,8 @@ impl Display for Expr {
             }
             Expr::Identifier(id) => f.write_fmt(format_args!("Ident : {}", id)),
             Expr::GlobalDataAddr(addr) => f.write_fmt(format_args!("GlobalAddr : {}", addr)),
-            Expr::Function(name, _, _) => f.write_fmt(format_args!("Function : {} ", name))
+            Expr::Function(name, _, _) => f.write_fmt(format_args!("Function : {} ", name)),
+            Expr::Operation(lhs, rhs, _) => f.write_fmt(format_args!("Operation : {} {}", lhs, rhs))
         }
     }
 }
@@ -43,13 +52,29 @@ peg::parser! {pub grammar parser() for str {
 
     rule statement() -> Expr = compound_statement() / simple_statement()
 
-    rule compound_statement() -> Expr = simple_statement()
+    rule compound_statement() -> Expr = function() / simple_statement()
+
+    rule functions() -> Vec<Expr> = fns:(function()*) {fns}
+
+
+   rule function() -> Expr =  [' ' | '\t' | '\n']* "def" _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" _ ":" _ "\n"+  {
+        Expr::Identifier(id)
+    }
 
     rule simple_statement() -> Expr = assignment()
 
-    rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" _ expr:expression() ['\n' | ';']* { Expr::Assign(id, Box::new(expr))}
+    rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" _ expr:expression() "\n"* { Expr::Assign(id, Box::new(expr))}
 
     rule expression() -> Expr = assignment()  / literal()
+
+    rule arithmetic() -> Expr = [' ' | '\t' | '\n']* operand:expression() _ op:op() _ operator:expression() "\n"* {Expr::Operation(Box::new(operand), Box::new(operator), op)} 
+
+    rule op() -> BinaryOp = add() / sub() / mul() / div() 
+
+    rule add() -> BinaryOp = "+" {BinaryOp::Add}
+    rule sub() -> BinaryOp = "-" {BinaryOp::Sub}
+    rule div() -> BinaryOp = "/" {BinaryOp::Div}
+    rule mul() -> BinaryOp = "*" {BinaryOp::Mul}
 
     rule name() -> String
         = quiet!{ n:$(['a'..='z' | 'A'..='Z' | '_']['a'..='z' | 'A'..='Z' | '0'..='9' | '_']*) { n.to_owned() } }
@@ -79,16 +104,13 @@ B = 4";
 
     #[test]
     fn test_assignment() -> Result<()> {
-        let expr = &parser::file(ASSIGN)?[0];
-        matches!(expr, Expr::Assign(_, _));
+        let _ = &parser::file(ASSIGN)?[0];
         Ok(())
     }
 
     #[test]
     fn test_multi_assign() -> Result<()> {
-        let expr = parser::file(MULTI_ASSIGN)?;
-        matches!(expr[0], Expr::Assign(_, _));
-        matches!(expr[1], Expr::Assign(_, _));
+        let _ = parser::file(MULTI_ASSIGN)?;
         Ok(())
     }
 
