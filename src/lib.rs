@@ -104,7 +104,7 @@ B = 4";
 
     const BINARY_OP:&str = "A = 3 + 4
 C = 9 + 10
-D = A + C";
+D = A + B";
 
     #[test]
     fn test_assignment() -> Result<()> {
