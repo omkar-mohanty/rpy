@@ -1,9 +1,10 @@
+use crate::Result;
 use cranelift::prelude::*;
-use cranelift_jit::{JITModule, JITBuilder};
+use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Module};
 
 pub struct JIT {
-    builder_context: FunctionBuilderContext, 
+    builder_context: FunctionBuilderContext,
     ctx: codegen::Context,
     data_ctx: DataContext,
     module: JITModule,
@@ -32,3 +33,14 @@ impl Default for JIT {
     }
 }
 
+impl JIT {
+    fn translate(&mut self, params: Vec<String>) -> Result<()> {
+        let int = self.module.target_config().pointer_type();
+
+        for _p in &params {
+            self.ctx.func.signature.params.push(AbiParam::new(int));
+        }
+
+        Ok(())
+    }
+}

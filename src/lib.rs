@@ -46,7 +46,7 @@ peg::parser! {pub grammar parser() for str {
 
     rule assignment() -> Expr = id:name() _ "=" _ expr:expression() "\n"* { Expr::Assign(id, Box::new(expr))}
 
-    rule expression() -> Expr = assignment()  / call() / arithmetic() / literal()  
+    rule expression() -> Expr = assignment()  / call() / arithmetic() / literal()
 
     rule arithmetic() -> Expr = operand:literal() _ op:op() _ operator:literal() {Expr::Operation(Box::new(operand), Box::new(operator), op)}
 
@@ -80,10 +80,12 @@ mod tests {
     A = 3";
     const ASSIGN: &str = "A = 3";
 
-    const MULTI_ASSIGN: &str = "A = 3
+    const MULTI_ASSIGN: &str = "
+A = 3
 B = 4";
 
-    const BINARY_OP: &str = "A = 3 + 4
+    const BINARY_OP: &str = "
+A = 3 + 4
 C = 9 + 10
 D = A + B
 F = G - 10
