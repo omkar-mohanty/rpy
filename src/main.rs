@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::Parser;
-use rpy::Result;
+use rpy::{Result, Sesssion};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -14,7 +14,7 @@ fn main() -> Result<()> {
 
     let source = std::fs::read_to_string(args.source_file)?;
 
-    println!("{}", source);
+    let session = Sesssion::new(source);
 
     Ok(())
 }
