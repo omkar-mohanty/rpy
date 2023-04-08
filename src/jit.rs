@@ -34,7 +34,13 @@ impl Default for JIT {
 }
 
 impl JIT {
+    pub fn compile(&mut self, source: &str) -> Result<*const u8> {
+        todo!("Complete compile function");
+
+    }
+
     fn translate(&mut self, params: Vec<String>) -> Result<()> {
+        todo!("implement translate function");
         let int = self.module.target_config().pointer_type();
 
         for _p in &params {
