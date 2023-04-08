@@ -1,4 +1,7 @@
 mod jit;
+mod session;
+
+pub use session::Sesssion;
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
