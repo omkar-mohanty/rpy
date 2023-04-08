@@ -1,7 +1,5 @@
 mod jit;
 
-use std::fmt::Display;
-
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub enum Expr {
@@ -10,7 +8,8 @@ pub enum Expr {
     Assign(String, Box<Expr>),
     GlobalDataAddr(String),
     Function(String, Vec<String>, Vec<Expr>),
-    Operation(Box<Expr>, Box<Expr>, BinaryOp)
+    Operation(Box<Expr>, Box<Expr>, BinaryOp),
+    Call(String, Vec<String>)
 }
 
 pub enum BinaryOp {
@@ -20,33 +19,6 @@ pub enum BinaryOp {
     Div
 }
 
-pub fn print_ast(expr: &Expr) {
-    use Expr::*;
-
-    match expr {
-        Literal(_) | Identifier(_) | GlobalDataAddr(_) | Function(_, _, _) | Operation(_, _, _) => println!("{}", expr),
-        Assign(var, val) => {
-            println!("{} {}", var, val)
-        }
-    }
-}
-
-impl Display for Expr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Expr::Literal(lit) => f.write_fmt(format_args!("Lit : {}", lit)),
-            Expr::Assign(var, val) => {
-                f.write_fmt(format_args!("Assign : {}\t", var))?;
-                val.fmt(f)
-            }
-            Expr::Identifier(id) => f.write_fmt(format_args!("Ident : {}", id)),
-            Expr::GlobalDataAddr(addr) => f.write_fmt(format_args!("GlobalAddr : {}", addr)),
-            Expr::Function(name, _, _) => f.write_fmt(format_args!("Function : {} ", name)),
-            Expr::Operation(lhs, rhs, _) => f.write_fmt(format_args!("Operation : {} {}", lhs, rhs))
-        }
-    }
-}
-
 peg::parser! {pub grammar parser() for str {
     pub rule file() -> Vec<Expr> = s:statements() { s }
 
@@ -54,7 +26,7 @@ peg::parser! {pub grammar parser() for str {
 
     rule statement() -> Expr = compound_statement() / simple_statement()
 
-    rule compound_statement() -> Expr = function() / simple_statement()
+    rule compound_statement() -> Expr = function() / call() / simple_statement()
 
     rule functions() -> Vec<Expr> = fns:(function()*) {fns}
 
@@ -63,11 +35,15 @@ peg::parser! {pub grammar parser() for str {
         Expr::Identifier(id)
     }
 
+    rule call() -> Expr =  [' ' | '\t' | '\n']* _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" "\n"* {
+        Expr::Call(id, params)
+    }
+
     rule simple_statement() -> Expr = assignment()
 
     rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" _ expr:expression() "\n"* { Expr::Assign(id, Box::new(expr))}
 
-    rule expression() -> Expr = assignment()  / arithmetic() / literal() 
+    rule expression() -> Expr = assignment()  / arithmetic() / literal() / call()
 
     rule arithmetic() -> Expr = operand:literal() _ op:op() _ operator:literal() {Expr::Operation(Box::new(operand), Box::new(operator), op)} 
 
@@ -107,7 +83,9 @@ B = 4";
     const BINARY_OP:&str = "A = 3 + 4
 C = 9 + 10
 D = A + B
-F = G - 10";
+F = G - 10
+B = Func()
+";
 
     #[test]
     fn test_assignment() -> Result<()> {
