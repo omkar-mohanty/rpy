@@ -31,8 +31,8 @@ peg::parser! {pub grammar parser() for str {
     rule functions() -> Vec<Expr> = fns:(function()*) {fns}
 
 
-   rule function() -> Expr =  [' ' | '\t' | '\n']* "def" _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" _ ":" _ "\n"+  {
-        Expr::Identifier(id)
+   rule function() -> Expr =  [' ' | '\t' | '\n']* "def" _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" _ ":" _ "\n"+ stmts:statements() {
+        Expr::Function(id, params, stmts)
     }
 
     rule call() -> Expr =  _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" "\n"* {
