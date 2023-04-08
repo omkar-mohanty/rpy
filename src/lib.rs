@@ -9,14 +9,14 @@ pub enum Expr {
     GlobalDataAddr(String),
     Function(String, Vec<String>, Vec<Expr>),
     Operation(Box<Expr>, Box<Expr>, BinaryOp),
-    Call(String, Vec<String>)
+    Call(String, Vec<String>),
 }
 
 pub enum BinaryOp {
     Add,
     Sub,
     Mul,
-    Div
+    Div,
 }
 
 peg::parser! {pub grammar parser() for str {
@@ -35,19 +35,19 @@ peg::parser! {pub grammar parser() for str {
         Expr::Identifier(id)
     }
 
-    rule call() -> Expr =  [' ' | '\t' | '\n']* _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" "\n"* {
+    rule call() -> Expr =  _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" "\n"* {
         Expr::Call(id, params)
     }
 
-    rule simple_statement() -> Expr = assignment()
+    rule simple_statement() -> Expr = [' ' | '\t' | '\n']*  assign:assignment() {assign}
 
-    rule assignment() -> Expr = [' ' | '\t' | '\n']* id:name() _ "=" _ expr:expression() "\n"* { Expr::Assign(id, Box::new(expr))}
+    rule assignment() -> Expr = id:name() _ "=" _ expr:expression() "\n"* { Expr::Assign(id, Box::new(expr))}
 
-    rule expression() -> Expr = assignment()  / arithmetic() / literal() / call()
+    rule expression() -> Expr = assignment()  / call() / arithmetic() / literal()  
 
-    rule arithmetic() -> Expr = operand:literal() _ op:op() _ operator:literal() {Expr::Operation(Box::new(operand), Box::new(operator), op)} 
+    rule arithmetic() -> Expr = operand:literal() _ op:op() _ operator:literal() {Expr::Operation(Box::new(operand), Box::new(operator), op)}
 
-    rule op() -> BinaryOp = add() / sub() / mul() / div() 
+    rule op() -> BinaryOp = add() / sub() / mul() / div()
 
     rule add() -> BinaryOp = "+" {BinaryOp::Add}
     rule sub() -> BinaryOp = "-" {BinaryOp::Sub}
@@ -59,7 +59,7 @@ peg::parser! {pub grammar parser() for str {
         / expected!("identifier")
 
     rule literal() -> Expr
-        = n:number() 
+        = n:number()
         /  i:name() { Expr::GlobalDataAddr(i) }
 
     rule number() -> Expr = n:$(['0'..='9']+) {Expr::Literal(n.to_owned())}
@@ -80,12 +80,13 @@ mod tests {
     const MULTI_ASSIGN: &str = "A = 3
 B = 4";
 
-    const BINARY_OP:&str = "A = 3 + 4
+    const BINARY_OP: &str = "A = 3 + 4
 C = 9 + 10
 D = A + B
 F = G - 10
-B = Func()
 ";
+    const FUNCTION_CALL: &str = " B = FUNC()
+FUnc()";
 
     #[test]
     fn test_assignment() -> Result<()> {
@@ -109,6 +110,12 @@ B = Func()
     #[test]
     fn binary_op() -> Result<()> {
         parser::file(BINARY_OP)?;
+        Ok(())
+    }
+
+    #[test]
+    fn func_call() -> Result<()> {
+        parser::file(FUNCTION_CALL)?;
         Ok(())
     }
 }
