@@ -1,4 +1,4 @@
-use crate::{jit::JIT, Expr};
+use crate::{jit::JIT, Result};
 
 pub struct Sesssion {
     source: String,
@@ -11,5 +11,10 @@ impl Sesssion {
             source,
             jit: JIT::default(),
         }
+    }
+
+    pub fn compile(&mut self) -> Result<()> {
+        let machine_code = self.jit.compile(&self.source)?;
+        Ok(())
     }
 }
