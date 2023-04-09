@@ -14,7 +14,7 @@ fn main() -> Result<()> {
 
     let source = std::fs::read_to_string(args.source_file)?;
 
-    let session = Sesssion::new(source);
+    let session = Sesssion::new(source, args.output_file);
 
     Ok(())
 }
