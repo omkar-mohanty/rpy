@@ -5,6 +5,7 @@ use crate::Expr;
 use crate::Result;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
+use cranelift_module::Linkage;
 use cranelift_module::{DataContext, Module};
 
 pub struct JIT {
@@ -89,6 +90,11 @@ impl<'a> FunctionTranslator<'a>  {
                 self.tranalate_operation(lhs, rhs, op)
             }
             Assign(name, expr) => self.translate_assign(name, *expr),
+            Identifier(name) => {
+                let variable = self.variables.get(&name).expect("variable not defined");
+                self.builder.use_var(*variable)
+            }
+            GlobalDataAddr(name) => self.translate_global_data_addr(name),
             _ => todo!("Implement all branches")
         }
     }
@@ -108,6 +114,14 @@ impl<'a> FunctionTranslator<'a>  {
             Mul => self.builder.ins().imul(lhs, rhs),
             Div => self.builder.ins().udiv(lhs, rhs),
         }
+    }
+
+    fn translate_global_data_addr(&mut self, name: String) -> Value {
+        let sym = self.module.declare_data(&name, Linkage::Export, true, false).expect("problem declaring data");
+        let local_id = self.module.declare_data_in_func(sym, self.builder.func);
+
+        let pointer = self.module.target_config().pointer_type();
+        self.builder.ins().symbol_value(pointer, local_id)
     }
 }
 
