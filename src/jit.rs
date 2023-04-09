@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::BinaryOp;
 use crate::Expr;
 use crate::Result;
 use cranelift::prelude::*;
@@ -82,7 +83,22 @@ impl<'a> FunctionTranslator<'a>  {
                 let imm:i32 = val.parse().unwrap();
                 self.builder.ins().iconst(self.int, i64::from(imm))
             },
+            Operation(lhs, rhs, op) => {
+                let lhs = self.translate_expr(*lhs);
+                let rhs = self.translate_expr(*rhs);
+                self.tranalate_operation(lhs, rhs, op)
+            }
             _ => todo!("Implement all branches")
+        }
+    }
+
+    fn tranalate_operation(&mut self,lhs: Value, rhs: Value, op:BinaryOp ) -> Value {
+        use BinaryOp::*;
+        match op {
+            Add => self.builder.ins().iadd(lhs, rhs),
+            Sub => self.builder.ins().isub(lhs, rhs),
+            Mul => self.builder.ins().imul(lhs, rhs),
+            Div => self.builder.ins().udiv(lhs, rhs),
         }
     }
 }
