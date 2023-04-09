@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::BinaryOp;
 use crate::Expr;
 use crate::Result;
+use crate::parser;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::Linkage;
@@ -40,7 +41,28 @@ impl Default for JIT {
 
 impl JIT {
     pub fn compile(&mut self, source: &str) -> Result<*const u8> {
-        todo!("Complete compile function");
+        let ast = parser::file(source)?;
+
+        for node in ast {
+            match node {
+                Expr::Function(name, params, stmts) => {
+                    self.translate(params, stmts, "none");
+
+                    let id = self.module.declare_function(&name, Linkage::Export, &self.ctx.func.signature).map_err(|e| e.to_string())?;
+
+                    self.module.define_function(func,&mut self.ctx).map_err(|e| e.to_string())?;
+
+                    self.module.clear_context(&mut self.ctx);
+
+                    self.module.finalize_definitions().unwrap();
+
+                    let code = self.module.get_finalized_function(id);
+
+                    return Ok(code)
+                },
+                _ => todo!("Implement all branches of compile")
+            }
+        }
     }
 
     fn translate(&mut self, params: Vec<String>, stmts: Vec<Expr>, the_return: &str) -> Result<()> {
