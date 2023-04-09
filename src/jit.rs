@@ -66,6 +66,27 @@ impl JIT {
     }
 }
 
+struct FunctionTranslator<'a> {
+    int: types::Type,
+    builder: FunctionBuilder<'a>,
+    variables: HashMap<String, Variable>,
+    module: &'a mut JITModule
+}
+
+impl<'a> FunctionTranslator<'a>  {
+    pub fn translate_expr(&mut self, expr: Expr) -> Value {
+        use Expr::*;
+
+        match expr {
+            Literal(val) => {
+                let imm:i32 = val.parse().unwrap();
+                self.builder.ins().iconst(self.int, i64::from(imm))
+            },
+            _ => todo!("Implement all branches")
+        }
+    }
+}
+
 fn declare_variable(
     int: types::Type,
     builder: &mut FunctionBuilder,
