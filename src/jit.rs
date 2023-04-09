@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use crate::Result;
+use crate::Expr;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Module};
@@ -39,13 +42,28 @@ impl JIT {
     }
 
     fn translate(&mut self, params: Vec<String>) -> Result<()> {
-        todo!("implement translate function");
         let int = self.module.target_config().pointer_type();
 
         for _p in &params {
             self.ctx.func.signature.params.push(AbiParam::new(int));
         }
 
+        self.ctx.func.signature.returns.push(AbiParam::new(int));
+
+        let mut builder = FunctionBuilder::new(&mut self.ctx.func, &mut self.builder_context);
+
+        let entry_block = builder.create_block();
+
+        builder.append_block_params_for_function_params(entry_block);
+
+        builder.switch_to_block(entry_block);
+
+        builder.seal_block(entry_block);
+
         Ok(())
     }
+}
+
+fn declare_variables() -> HashMap<String, Variable> {
+    todo!("Implement declare variable");
 }
