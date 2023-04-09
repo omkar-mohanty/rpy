@@ -88,8 +88,16 @@ impl<'a> FunctionTranslator<'a>  {
                 let rhs = self.translate_expr(*rhs);
                 self.tranalate_operation(lhs, rhs, op)
             }
+            Assign(name, expr) => self.translate_assign(name, *expr),
             _ => todo!("Implement all branches")
         }
+    }
+
+    fn translate_assign(&mut self, name: String, expr: Expr) -> Value {
+        let new_value = self.translate_expr(expr);
+        let variable = self.variables.get(&name).unwrap();
+        self.builder.def_var(*variable, new_value);
+        new_value
     }
 
     fn tranalate_operation(&mut self,lhs: Value, rhs: Value, op:BinaryOp ) -> Value {
