@@ -43,7 +43,7 @@ impl JIT {
         todo!("Complete compile function");
     }
 
-    fn translate(&mut self, params: Vec<String>, stmts: &[Expr], the_return: &str) -> Result<()> {
+    fn translate(&mut self, params: Vec<String>, stmts: Vec<Expr>, the_return: &str) -> Result<()> {
         let int = self.module.target_config().pointer_type();
 
         for _p in &params {
@@ -62,8 +62,24 @@ impl JIT {
 
         builder.seal_block(entry_block);
 
-        let variables = declare_variables(int, &mut builder, &params, the_return, stmts, entry_block);
+        let variables = declare_variables(int, &mut builder, &params, the_return, &stmts, entry_block);
 
+        let mut translator = FunctionTranslator {
+            int,
+            builder,
+            variables,
+            module: &mut self.module
+        };
+
+       for expr in stmts {
+            translator.translate_expr(expr);
+        } 
+
+        let return_variable = translator.variables.get(the_return).unwrap();
+        let return_value = translator.builder.use_var(*return_variable);
+
+        translator.builder.ins().return_(&[return_value]);
+        translator.builder.finalize();
         Ok(())
     }
 }
