@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::Result;
 use crate::Expr;
+use crate::Result;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataContext, Module};
@@ -41,7 +41,7 @@ impl JIT {
         todo!("Complete compile function");
     }
 
-    fn translate(&mut self, params: Vec<String>) -> Result<()> {
+    fn translate(&mut self, params: Vec<String>, stmts: &[Expr], the_return: &str) -> Result<()> {
         let int = self.module.target_config().pointer_type();
 
         for _p in &params {
@@ -60,10 +60,71 @@ impl JIT {
 
         builder.seal_block(entry_block);
 
+        let variables = declare_variables(int, &mut builder, &params, the_return, stmts, entry_block);
+
         Ok(())
     }
 }
 
-fn declare_variables() -> HashMap<String, Variable> {
-    todo!("Implement declare variable");
+fn declare_variable(
+    int: types::Type,
+    builder: &mut FunctionBuilder,
+    variables: &mut HashMap<String, Variable>,
+    index: &mut usize,
+    name: &str,
+) -> Variable {
+    let var = Variable::new(*index);
+
+    if !variables.contains_key(name) {
+        variables.insert(name.into(), var);
+        builder.declare_var(var, int);
+        *index += 1;
+    }
+
+    var
+}
+
+fn declare_variable_in_stmt(
+    int: types::Type,
+    builder: &mut FunctionBuilder,
+    variables: &mut HashMap<String, Variable>,
+    index: &mut usize,
+    expr: &Expr,
+) {
+    match *expr {
+       Expr::Assign(ref name, _) => {
+            declare_variable(int, builder, variables, index, name);
+        }
+        _ => {
+        }
+    }
+}
+
+fn declare_variables(
+    int: types::Type,
+    builder: &mut FunctionBuilder,
+    params: &[String],
+    the_return: &str,
+    stmts: &[Expr],
+    entry_block: Block,
+) -> HashMap<String, Variable> {
+    let mut variables = HashMap::new();
+    let mut index = 0;
+
+    for (i, name) in params.iter().enumerate() {
+        let val = builder.block_params(entry_block)[i];
+        let var = declare_variable(int, builder, &mut variables, &mut index, name);
+        builder.def_var(var, val);
+    }
+
+    let zero = builder.ins().iconst(int, 0);
+
+    let the_return = declare_variable(int, builder, &mut variables, &mut index, the_return);
+    builder.def_var(the_return, zero);
+
+    for expr in stmts {
+        declare_variable_in_stmt(int, builder, &mut variables, &mut index, expr);
+    }
+
+    variables
 }
