@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fs::{OpenOptions, File}, str::FromStr, io::Write};
+use std::{path::PathBuf, fs::{OpenOptions, File}, str::FromStr, io::Write, mem::size_of};
 
 use crate::{jit::JIT, Result};
 
@@ -25,7 +25,6 @@ impl Sesssion {
 
         let file = File::options().write(true).open(path)?;
 
-        file.write(machine_code);
         Ok(())
     }
 }

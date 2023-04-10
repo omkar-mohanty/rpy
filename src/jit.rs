@@ -5,6 +5,7 @@ use crate::Expr;
 use crate::Result;
 use crate::parser;
 use cranelift::prelude::*;
+use cranelift_faerie::FaerieBackend;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::Linkage;
 use cranelift_module::{DataContext, Module};
@@ -13,7 +14,7 @@ pub struct JIT {
     builder_context: FunctionBuilderContext,
     ctx: codegen::Context,
     data_ctx: DataContext,
-    module: JITModule,
+    module: Module<FaerieBackend>,
 }
 
 impl Default for JIT {
