@@ -46,11 +46,11 @@ impl JIT {
         for node in ast {
             match node {
                 Expr::Function(name, params, stmts) => {
-                    self.translate(params, stmts, "none");
+                    self.translate(params, stmts, "none")?;
 
                     let id = self.module.declare_function(&name, Linkage::Export, &self.ctx.func.signature).map_err(|e| e.to_string())?;
 
-                    self.module.define_function(func,&mut self.ctx).map_err(|e| e.to_string())?;
+                    self.module.define_function(id,&mut self.ctx).map_err(|e| e.to_string())?;
 
                     self.module.clear_context(&mut self.ctx);
 
@@ -63,6 +63,8 @@ impl JIT {
                 _ => todo!("Implement all branches of compile")
             }
         }
+
+        Err("Could not compile".into())
     }
 
     fn translate(&mut self, params: Vec<String>, stmts: Vec<Expr>, the_return: &str) -> Result<()> {
