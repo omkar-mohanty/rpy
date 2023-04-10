@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, fs::{OpenOptions, File}, str::FromStr, io::Write};
 
 use crate::{jit::JIT, Result};
 
@@ -17,8 +17,15 @@ impl Sesssion {
         }
     }
 
-    pub fn compile(&mut self) -> Result<()> {
+    pub fn compile(mut self) -> Result<()> {
         let machine_code = self.jit.compile(&self.source)?;
+
+        let default_path = PathBuf::from_str("a.out").unwrap();
+        let path = self.output_file.unwrap_or(default_path);
+
+        let file = File::options().write(true).open(path)?;
+
+        file.write(machine_code);
         Ok(())
     }
 }
