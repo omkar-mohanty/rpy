@@ -8,7 +8,6 @@ use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::Linkage;
 use cranelift_module::{DataContext, Module};
-use cranelift_object::ObjectModule;
 
 pub struct JIT {
     builder_context: FunctionBuilderContext,
@@ -106,10 +105,6 @@ impl JIT {
         translator.builder.ins().return_(&[return_value]);
         translator.builder.finalize();
         Ok(())
-    }
-
-    pub fn finish(&self) {
-        let product = self.module.finish();
     }
 }
 
