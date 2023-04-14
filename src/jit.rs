@@ -139,8 +139,30 @@ impl<'a> FunctionTranslator<'a> {
                 self.builder.use_var(*variable)
             }
             GlobalDataAddr(name) => self.translate_global_data_addr(name),
+            Call(func, params) => self.translate_call(func, params),
             _ => todo!("Implement all branches"),
         }
+    }
+
+    fn translate_call(&self, name: String, params: Vec<String>) -> Value {
+        let mut sig = self.module.make_signature();
+
+        for _ars in params {
+            sig.params.push(AbiParam::new(self.int));
+        }
+
+        let callee = self
+            .module
+            .declare_function(&name, Linkage::Import, &sig)
+            .expect("problem declaring function");
+        let local_callee = self.module.declare_func_in_func(callee, self.builder.func);
+
+        let mut arg_values = Vec::new();
+        for arg in params {
+            arg_values.push(self.translate_expr(arg))
+        }
+        let call = self.builder.ins().call(local_callee, &arg_values);
+        self.builder.inst_results(call)[0]
     }
 
     fn translate_assign(&mut self, name: String, expr: Expr) -> Value {
