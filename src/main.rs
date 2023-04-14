@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use core::mem;
+use std::path::PathBuf;
 
 use clap::Parser;
 use rpy::{Result, Sesssion};
@@ -15,16 +15,15 @@ fn main() -> Result<()> {
 
     let source = std::fs::read_to_string(args.source_file)?;
 
-    unsafe {run_code::<(), ()>(source, ())?};
-    
+    unsafe { run_code::<(), ()>(source, ())? };
 
     Ok(())
 }
 
-unsafe fn run_code<I, O> (source: String, input: I) -> Result<O> {
+unsafe fn run_code<I, O>(source: String, input: I) -> Result<O> {
     let session = Sesssion::new(source);
 
-// Pass the string to the JIT, and it returns a raw pointer to machine code.
+    // Pass the string to the JIT, and it returns a raw pointer to machine code.
     let code_ptr = session.compile()?;
     // Cast the raw pointer to a typed function pointer. This is unsafe, because
     // this is the critical point where you have to trust that the generated code

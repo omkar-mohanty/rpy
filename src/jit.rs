@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
+use crate::parser;
 use crate::BinaryOp;
 use crate::Expr;
 use crate::Result;
-use crate::parser;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::Linkage;
@@ -46,9 +46,14 @@ impl JIT {
                 Expr::Function(name, params, stmts) => {
                     self.translate(params, stmts, "none")?;
 
-                    let id = self.module.declare_function(&name, Linkage::Export, &self.ctx.func.signature).map_err(|e| e.to_string())?;
+                    let id = self
+                        .module
+                        .declare_function(&name, Linkage::Export, &self.ctx.func.signature)
+                        .map_err(|e| e.to_string())?;
 
-                    self.module.define_function(id,&mut self.ctx).map_err(|e| e.to_string())?;
+                    self.module
+                        .define_function(id, &mut self.ctx)
+                        .map_err(|e| e.to_string())?;
 
                     self.module.clear_context(&mut self.ctx);
 
@@ -56,9 +61,9 @@ impl JIT {
 
                     let code = self.module.get_finalized_function(id);
 
-                    return Ok(code)
-                },
-                _ => todo!("Implement all branches of compile")
+                    return Ok(code);
+                }
+                _ => todo!("Implement all branches of compile"),
             }
         }
 
@@ -84,18 +89,19 @@ impl JIT {
 
         builder.seal_block(entry_block);
 
-        let variables = declare_variables(int, &mut builder, &params, the_return, &stmts, entry_block);
+        let variables =
+            declare_variables(int, &mut builder, &params, the_return, &stmts, entry_block);
 
         let mut translator = FunctionTranslator {
             int,
             builder,
             variables,
-            module: &mut self.module
+            module: &mut self.module,
         };
 
-       for expr in stmts {
+        for expr in stmts {
             translator.translate_expr(expr);
-        } 
+        }
 
         let return_variable = translator.variables.get(the_return).unwrap();
         let return_value = translator.builder.use_var(*return_variable);
@@ -110,18 +116,18 @@ struct FunctionTranslator<'a> {
     int: types::Type,
     builder: FunctionBuilder<'a>,
     variables: HashMap<String, Variable>,
-    module: &'a mut JITModule
+    module: &'a mut JITModule,
 }
 
-impl<'a> FunctionTranslator<'a>  {
+impl<'a> FunctionTranslator<'a> {
     pub fn translate_expr(&mut self, expr: Expr) -> Value {
         use Expr::*;
 
         match expr {
             Literal(val) => {
-                let imm:i32 = val.parse().unwrap();
+                let imm: i32 = val.parse().unwrap();
                 self.builder.ins().iconst(self.int, i64::from(imm))
-            },
+            }
             Operation(lhs, rhs, op) => {
                 let lhs = self.translate_expr(*lhs);
                 let rhs = self.translate_expr(*rhs);
@@ -133,7 +139,7 @@ impl<'a> FunctionTranslator<'a>  {
                 self.builder.use_var(*variable)
             }
             GlobalDataAddr(name) => self.translate_global_data_addr(name),
-            _ => todo!("Implement all branches")
+            _ => todo!("Implement all branches"),
         }
     }
 
@@ -144,7 +150,7 @@ impl<'a> FunctionTranslator<'a>  {
         new_value
     }
 
-    fn tranalate_operation(&mut self,lhs: Value, rhs: Value, op:BinaryOp ) -> Value {
+    fn tranalate_operation(&mut self, lhs: Value, rhs: Value, op: BinaryOp) -> Value {
         use BinaryOp::*;
         match op {
             Add => self.builder.ins().iadd(lhs, rhs),
@@ -155,7 +161,10 @@ impl<'a> FunctionTranslator<'a>  {
     }
 
     fn translate_global_data_addr(&mut self, name: String) -> Value {
-        let sym = self.module.declare_data(&name, Linkage::Export, true, false).expect("problem declaring data");
+        let sym = self
+            .module
+            .declare_data(&name, Linkage::Export, true, false)
+            .expect("problem declaring data");
         let local_id = self.module.declare_data_in_func(sym, self.builder.func);
 
         let pointer = self.module.target_config().pointer_type();
@@ -189,11 +198,10 @@ fn declare_variable_in_stmt(
     expr: &Expr,
 ) {
     match *expr {
-       Expr::Assign(ref name, _) => {
+        Expr::Assign(ref name, _) => {
             declare_variable(int, builder, variables, index, name);
         }
-        _ => {
-        }
+        _ => {}
     }
 }
 
