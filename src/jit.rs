@@ -5,16 +5,16 @@ use crate::Expr;
 use crate::Result;
 use crate::parser;
 use cranelift::prelude::*;
-use cranelift_faerie::FaerieBackend;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::Linkage;
 use cranelift_module::{DataContext, Module};
+use cranelift_object::ObjectModule;
 
 pub struct JIT {
     builder_context: FunctionBuilderContext,
     ctx: codegen::Context,
     data_ctx: DataContext,
-    module: Module<FaerieBackend>,
+    module: JITModule,
 }
 
 impl Default for JIT {
@@ -106,6 +106,10 @@ impl JIT {
         translator.builder.ins().return_(&[return_value]);
         translator.builder.finalize();
         Ok(())
+    }
+
+    pub fn finish(&self) {
+        let product = self.module.finish();
     }
 }
 
