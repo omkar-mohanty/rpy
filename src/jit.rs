@@ -7,12 +7,11 @@ use crate::parser;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::Linkage;
-use cranelift_module::{DataContext, Module};
+use cranelift_module::Module;
 
 pub struct JIT {
     builder_context: FunctionBuilderContext,
     ctx: codegen::Context,
-    data_ctx: DataContext,
     module: JITModule,
 }
 
@@ -33,7 +32,6 @@ impl Default for JIT {
         Self {
             builder_context: FunctionBuilderContext::new(),
             ctx: module.make_context(),
-            data_ctx: DataContext::new(),
             module,
         }
     }

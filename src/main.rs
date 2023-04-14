@@ -15,14 +15,14 @@ fn main() -> Result<()> {
 
     let source = std::fs::read_to_string(args.source_file)?;
 
-    unsafe {run_code::<(), ()>(source, (), args.output_file)?};
+    unsafe {run_code::<(), ()>(source, ())?};
     
 
     Ok(())
 }
 
-unsafe fn run_code<I, O> (source: String, input: I, output_file: Option<PathBuf>) -> Result<O> {
-    let session = Sesssion::new(source, output_file);
+unsafe fn run_code<I, O> (source: String, input: I) -> Result<O> {
+    let session = Sesssion::new(source);
 
 // Pass the string to the JIT, and it returns a raw pointer to machine code.
     let code_ptr = session.compile()?;
