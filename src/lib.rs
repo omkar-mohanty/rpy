@@ -64,8 +64,12 @@ peg::parser! {pub grammar parser() for str {
     rule literal() -> Expr
         = n:number()
         /  i:name() { Expr::GlobalDataAddr(i) }
+        / st:string() {Expr::Literal(st)}
 
     rule number() -> Expr = n:$(['0'..='9']+) {Expr::Literal(n.to_owned())}
+
+    rule string() -> String
+    = "\"" s:name() "\"" { s.to_owned() }
 
     rule _() = quiet!{[' ' | '\t' ]*}
 }}
@@ -92,6 +96,14 @@ F = G - 10
 ";
     const FUNCTION_CALL: &str = " B = FUNC()
 FUnc()";
+
+    const STRING_LITERAL:&str = "A = \"Hello\"";
+
+    #[test]
+    fn test_string_literal() -> Result<()> {
+        let _ = parser::file(STRING_LITERAL)?[0];
+        Ok(())
+    }
 
     #[test]
     fn test_assignment() -> Result<()> {
