@@ -38,7 +38,7 @@ peg::parser! {pub grammar parser() for str {
         Expr::Function(id, params, stmts)
     }
 
-    rule call() -> Expr =  _ id:name() _ "(" params:((_ i:expression() _ {i}) ** ",") ")" "\n"* {
+    rule call() -> Expr =  _ id:name() _ "(" params:((_ i:expression() _ {i}) ** ",") ")" "\n"+ {
         Expr::Call(id, params)
     }
 
@@ -95,9 +95,14 @@ D = A + B
 F = G - 10
 ";
     const FUNCTION_CALL: &str = " B = FUNC()
-FUnc()";
+FUnc()
+";
 
     const STRING_LITERAL:&str = "A = \"Hello\"";
+
+    const EXTERN_FUNC:&str = "def hello():
+            puts(\"Hello\")
+        ";
 
     #[test]
     fn test_string_literal() -> Result<()> {
@@ -133,6 +138,12 @@ FUnc()";
     #[test]
     fn func_call() -> Result<()> {
         parser::file(FUNCTION_CALL)?;
+        Ok(())
+    }
+
+    #[test]
+    fn test_extern_func() -> Result<()> {
+        parser::file(EXTERN_FUNC)?;
         Ok(())
     }
 }
