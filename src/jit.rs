@@ -144,10 +144,10 @@ impl<'a> FunctionTranslator<'a> {
         }
     }
 
-    fn translate_call(&self, name: String, params: Vec<String>) -> Value {
+    fn translate_call(&mut self, name: String, params: Vec<Expr>) -> Value {
         let mut sig = self.module.make_signature();
 
-        for _ars in params {
+        for _ars in &params {
             sig.params.push(AbiParam::new(self.int));
         }
 

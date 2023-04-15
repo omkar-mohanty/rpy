@@ -12,7 +12,7 @@ pub enum Expr {
     GlobalDataAddr(String),
     Function(String, Vec<String>, Vec<Expr>),
     Operation(Box<Expr>, Box<Expr>, BinaryOp),
-    Call(String, Vec<String>),
+    Call(String, Vec<Expr>),
 }
 
 pub enum BinaryOp {
@@ -38,7 +38,7 @@ peg::parser! {pub grammar parser() for str {
         Expr::Function(id, params, stmts)
     }
 
-    rule call() -> Expr =  _ id:name() _ "(" params:((_ i:name() _ {i}) ** ",") ")" "\n"* {
+    rule call() -> Expr =  _ id:name() _ "(" params:((_ i:expression() _ {i}) ** ",") ")" "\n"* {
         Expr::Call(id, params)
     }
 
