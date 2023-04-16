@@ -13,7 +13,7 @@ impl Sesssion {
         }
     }
 
-    pub fn compile(mut self) -> Result<*const u8> {
+    pub fn compile(mut self) -> Result<Vec<u8>> {
         self.jit.compile(&self.source)
     }
 }
