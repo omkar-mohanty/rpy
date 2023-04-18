@@ -8,13 +8,11 @@ use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::Linkage;
 use cranelift_module::Module;
-use cranelift_object::ObjectBuilder;
-use cranelift_object::ObjectModule;
 
 pub struct JIT {
     builder_context: FunctionBuilderContext,
     ctx: codegen::Context,
-    module: ObjectModule,
+    module: JITModule,
 }
 
 impl Default for JIT {
@@ -28,9 +26,9 @@ impl Default for JIT {
         let isa = isa_builder
             .finish(settings::Flags::new(flag_builder))
             .unwrap();
-        let builder = ObjectBuilder::new(isa, "a.out", cranelift_module::default_libcall_names()).unwrap();
+        let builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
 
-        let module = ObjectModule::new(builder);
+        let module = JITModule::new(builder);
         Self {
             builder_context: FunctionBuilderContext::new(),
             ctx: module.make_context(),
@@ -40,7 +38,7 @@ impl Default for JIT {
 }
 
 impl JIT {
-    pub fn compile(mut self, source: &str) -> Result<Vec<u8>> {
+    pub fn compile(&mut self, source: &str) -> Result<*const u8> {
         let ast = parser::file(source)?;
 
         for node in ast {
@@ -59,13 +57,11 @@ impl JIT {
 
                     self.module.clear_context(&mut self.ctx);
 
+                    self.module.finalize_definitions().unwrap();
 
-                    let code = self.module.finish();
+                    let code = self.module.get_finalized_function(id);
 
-                    let code = code.emit()?;
-
-                   return Ok(code)
-
+                    return Ok(code);
                 }
                 _ => todo!("Implement all branches of compile"),
             }
@@ -120,7 +116,7 @@ struct FunctionTranslator<'a> {
     int: types::Type,
     builder: FunctionBuilder<'a>,
     variables: HashMap<String, Variable>,
-    module: &'a mut ObjectModule,
+    module: &'a mut JITModule,
 }
 
 impl<'a> FunctionTranslator<'a> {
@@ -223,11 +219,8 @@ fn declare_variable_in_stmt(
     index: &mut usize,
     expr: &Expr,
 ) {
-    match *expr {
-        Expr::Assign(ref name, _) => {
-            declare_variable(int, builder, variables, index, name);
-        }
-        _ => {}
+    if let Expr::Assign(ref name, _) = *expr {
+        declare_variable(int, builder, variables, index, name);
     }
 }
 

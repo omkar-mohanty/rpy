@@ -98,9 +98,9 @@ F = G - 10
 FUnc()
 ";
 
-    const STRING_LITERAL:&str = "A = \"Hello\"";
+    const STRING_LITERAL: &str = "A = \"Hello\"";
 
-    const EXTERN_FUNC:&str = "def hello():
+    const EXTERN_FUNC: &str = "def hello():
             puts(\"Hello\")
         ";
 
